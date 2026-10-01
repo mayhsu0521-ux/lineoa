@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LINE 官方帳號費用試算</title>
+<style>
+:root {
+  --green: #06C755;
+  --dkgreen: #019935;
+  --white: #FFFFFF;
+  --bg: #F5F5F5;
+  --card: #FFFFFF;
+  --text: #333333;
+  --muted: #888888;
+  --border: #E0E0E0;
+  --peach: #FF6B35;
+  --yellow: #FFF3CD;
+  --radius: 14px;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top,0px);
+  padding-bottom: env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);font-family:'Helvetica Neue',Arial,sans-serif;color:var(--text);}
+
+.header{background:linear-gradient(135deg,#019935,#06C755);padding:28px 20px 22px;text-align:center;}
+.header h1{font-size:20px;font-weight:700;color:white;margin-bottom:4px;}
+.header p{font-size:12px;color:rgba(255,255,255,0.85);}
+
+.wrap{max-width:480px;margin:0 auto;padding:16px 14px 40px;}
+
+.card{background:var(--card);border-radius:var(--radius);padding:18px 16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+.card-title{font-size:13px;font-weight:700;color:var(--dkgreen);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+
+/* Plan selector */
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.plan-btn{border:2px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;background:white;transition:all 0.15s;}
+.plan-btn.active{border-color:var(--green);background:#F0FFF4;}
+.plan-btn .pname{font-size:13px;font-weight:700;color:var(--text);}
+.plan-btn .pfee{font-size:11px;color:var(--muted);margin-top:2px;}
+.plan-btn .pmsg{font-size:11px;color:var(--green);font-weight:600;margin-top:1px;}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.toggle-row label{font-size:13px;font-weight:600;flex:1;}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:0.2s;}
+.slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:white;border-radius:50%;transition:0.2s;}
+input:checked+.slider{background:var(--green);}
+input:checked+.slider::before{transform:translateX(20px);}
+
+/* Input */
+.input-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.input-row label{font-size:13px;font-weight:600;width:90px;flex-shrink:0;}
+.input-wrap{flex:1;position:relative;}
+.input-wrap input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 40px 10px 12px;font-size:14px;color:var(--text);outline:none;font-family:inherit;transition:border-color 0.15s;}
+.input-wrap input:focus{border-color:var(--green);}
+.input-unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);}
+
+/* Result */
+.result-block{background:linear-gradient(135deg,#019935,#06C755);border-radius:var(--radius);padding:20px 16px;margin-bottom:14px;color:white;}
+.result-title{font-size:13px;opacity:0.85;margin-bottom:8px;}
+.result-total{font-size:36px;font-weight:700;margin-bottom:4px;}
+.result-sub{font-size:12px;opacity:0.8;}
+.result-inc{font-size:13px;margin-top:12px;background:rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;}
+
+/* Breakdown */
+.breakdown{margin-top:4px;}
+.bk-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.bk-row:last-child{border-bottom:none;font-weight:700;font-size:14px;}
+.bk-label{color:var(--muted);}
+.bk-val{color:var(--text);font-weight:600;}
+.bk-row.total .bk-label{color:var(--text);}
+.bk-row.total .bk-val{color:var(--green);font-size:16px;}
+
+/* Tier table */
+.tier-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+.tier-table th{background:#F0FFF4;color:var(--dkgreen);padding:7px 8px;text-align:left;font-weight:700;}
+.tier-table td{padding:6px 8px;border-bottom:1px solid #F0F0F0;}
+.tier-table tr.active-tier{background:#FFFDE7;}
+.tier-table tr.active-tier td{font-weight:700;color:#E65100;}
+
+/* Note */
+.note{background:var(--yellow);border-radius:10px;padding:12px 14px;font-size:12px;color:#7A5900;line-height:1.7;}
+.note b{color:#5C4000;}
+
+/* Mode tabs */
+.mode-tabs{display:flex;background:#F0F0F0;border-radius:10px;padding:3px;margin-bottom:16px;}
+.mode-tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;color:var(--muted);transition:all 0.15s;}
+.mode-tab.active{background:white;color:var(--green);box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+
+.hidden{display:none!important;}
+
+.pill{display:inline-block;background:#E8F5E9;color:var(--dkgreen);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 LINE 官方帳號費用試算</h1>
+  <p>依據 LINE 115/11 最新 Offline 方案資費</p>
+</div>
+
+<div class="wrap">
+
+  <!-- 模式切換 -->
+  <div class="mode-tabs">
+    <div class="mode-tab active" id="tab1" onclick="switchMode(1)">💰 預算→訊息量</div>
+    <div class="mode-tab" id="tab2" onclick="switchMode(2)">📨 訊息量→費用</div>
+  </div>
+
+  <!-- 方案選擇 -->
+  <div class="card">
+    <div class="card-title">① 選擇月費方案</div>
+    <div class="plan-grid">
+      <div class="plan-btn" id="plan-light" onclick="selectPlan('light')">
+        <div class="pname">輕用量</div>
+        <div class="pfee">月費 $0</div>
+        <div class="pmsg">200 則</div>
+      </div>
+      <div class="plan-btn" id="plan-mid" onclick="selectPlan('mid')">
+        <div class="pname">中用量</div>
+        <div class="pfee">月費 $1,000</div>
+        <div class="pmsg">3,000 則</div>
+      </div>
+      <div class="plan-btn active" id="plan-high" onclick="selectPlan('high')">
+        <div class="pname">高用量</div>
+        <div class="pfee">月費 $1,400</div>
+        <div class="pmsg">6,000 則 <span class="pill">可加購</span></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;">
+      ⚠️ 僅高用量方案可加購訊息；輕/中用量超過免費額度後無法加購。
+    </div>
+  </div>
+
+  <!-- 模式 1：輸入預算 -->
+  <div id="mode1">
+    <div class="card">
+      <div class="card-title">② 輸入每月預算（未稅）</div>
+      <div class="input-row">
+        <label>每月預算</label>
+        <div class="input-wrap">
+          <input type="number" id="budget" placeholder="例：50000" min="0" oninput="calc1()">
+          <span class="input-unit">TWD</span>
+        </div>
+      </div>
+      <div class="toggle-row" style="margin-top:4px;">
+        <label style="font-size:12px;color:var(--muted);">輸入含稅金額，自動換算未稅</label>
+        <label class="toggle"><input type="checkbox" id="vatIn1" onchange="calc1()"><span class="slider"></span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模式 2：輸入訊息量 -->
+  <div id="mode2" class="hidden">
+    <div class="card">
+      <div class="card-title">② 輸入每月訊息發送數</div>
+      <div class="input-row">
+        <label>訊息數量</label>
+        <div class="input-wrap">
+          <input type="number" id="msgQty" placeholder="例：100000" min="0" oninput="calc2()">
+          <span class="input-unit">則</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div id="resultArea" class="hidden">
+    <div class="result-block">
+      <div class="result-title" id="resultLabel">每月預估費用（未稅）</div>
+      <div class="result-total" id="resultMain">$0</div>
+      <div class="result-sub" id="resultSub"></div>
+      <div class="result-inc" id="resultInc"></div>
+    </div>
+
+    <!-- 費用明細 -->
+    <div class="card">
+      <div class="card-title">📋 費用明細</div>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+
+    <!-- 加購階梯明細（只在有加購時顯示） -->
+    <div class="card hidden" id="tierCard">
+      <div class="card-title">📊 加購訊息階梯計算</div>
+      <table class="tier-table">
+        <thead>
+          <tr><th>階</th><th>訊息範圍（則）</th><th>單價</th><th>本次用量</th><th>小計</th></tr>
+        </thead>
+        <tbody id="tierBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 注意事項 -->
+    <div class="note" id="noteBlock"></div>
+  </div>
+
+</div>
+
+<script>
+// ── 資費設定 ──
+const PLANS = {
+  light: { name:'輕用量', fee:0, free:200, canBuy:false },
+  mid:   { name:'中用量', fee:1000, free:3000, canBuy:false },
+  high:  { name:'高用量', fee:1400, free:6000, canBuy:true },
+};
+
+// 15 階累進費率
+const TIERS = [
+  { max:50000,     price:0.2   },
+  { max:65000,     price:0.15  },
+  { max:105000,    price:0.146 },
+  { max:185000,    price:0.135 },
+  { max:345000,    price:0.115 },
+  { max:665000,    price:0.114 },
+  { max:825000,    price:0.11  },
+  { max:1305000,   price:0.105 },
+  { max:2585000,   price:0.095 },
+  { max:3525000,   price:0.085 },
+  { max:5145000,   price:0.073 },
+  { max:8025000,   price:0.061 },
+  { max:10265000,  price:0.043 },
+  { max:20505000,  price:0.021 },
+  { max:Infinity,  price:0.0121},
+];
+
+let currentPlan = 'high';
+let currentMode = 1;
+
+function selectPlan(p) {
+  currentPlan = p;
+  document.querySelectorAll('.plan-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('plan-'+p).classList.add('active');
+  if (currentMode === 1) calc1(); else calc2();
+}
+
+function switchMode(m) {
+  currentMode = m;
+  document.getElementById('tab1').classList.toggle('active', m===1);
+  document.getElementById('tab2').classList.toggle('active', m===2);
+  document.getElementById('mode1').classList.toggle('hidden', m!==1);
+  document.getElementById('mode2').classList.toggle('hidden', m!==2);
+  document.getElementById('resultArea').classList.add('hidden');
+}
+
+// 累進計算加購費用
+function calcExtraCost(extraMsgs) {
+  let remain = extraMsgs;
+  let total = 0;
+  const detail = [];
+  let prev = 0;
+  for (let i = 0; i < TIERS.length; i++) {
+    if (remain <= 0) break;
+    const cap = TIERS[i].max === Infinity ? Infinity : TIERS[i].max;
+    const tierSize = cap === Infinity ? remain : Math.min(cap - prev, remain);
+    const used = Math.min(tierSize, remain);
+    if (used > 0) {
+      const cost = used * TIERS[i].price;
+      detail.push({ tier: i+1, from: prev+1, to: prev+used, price: TIERS[i].price, used, cost });
+      total += cost;
+      remain -= used;
+    }
+    prev = cap === Infinity ? prev + used : cap;
+  }
+  return { total: Math.floor(total), detail };
+}
+
+// 模式1：預算 → 訊息量
+function calc1() {
+  const plan = PLANS[currentPlan];
+  let raw = parseFloat(document.getElementById('budget').value) || 0;
+  const vatIn = document.getElementById('vatIn1').checked;
+  if (vatIn) raw = Math.floor(raw / 1.05);
+
+  const budgetAfterFee = raw - plan.fee;
+
+  // 不能加購
+  if (!plan.canBuy) {
+    if (raw < plan.fee) {
+      showResult({
+        label: '每月可發送訊息數',
+        main: '0 則',
+        sub: `預算不足以支付月費 $${plan.fee.toLocaleString()}`,
+        inc: `建議預算至少 $${plan.fee.toLocaleString()} 以上`,
+        breakdown: [
+          { label:'月費', val:`$${plan.fee.toLocaleString()}` },
+          { label:'免費訊息', val:`${plan.free.toLocaleString()} 則` },
+          { label:'無法加購額外訊息', val:'—' },
+        ],
+        note:`${plan.name}方案不支援加購訊息，每月僅含 ${plan.free.toLocaleString()} 則免費訊息。`,
+        tiers: null
+      });
+    } else {
+      showResult({
+        label: '每月可發送訊息數',
+        main: `${plan.free.toLocaleString()} 則`,
+        sub: `僅含免費額度，無法加購`,
+        inc: `實際月費：$${plan.fee.toLocaleString()} 未稅`,
+        breakdown: [
+          { label:'月費', val:`$${plan.fee.toLocaleString()}` },
+          { label:'免費訊息額度', val:`${plan.free.toLocaleString()} 則` },
+          { label:'預算剩餘', val:`$${(budgetAfterFee).toLocaleString()}（無法使用）` },
+        ],
+        note:`${plan.name}方案不支援加購訊息。剩餘預算 $${budgetAfterFee.toLocaleString()} 無法轉為訊息量。`,
+        tiers: null
+      });
+    }
+    return;
+  }
+
+  // 高用量：逆推訊息量
+  if (budgetAfterFee <= 0) {
+    showResult({
+      label: '每月可發送訊息數',
+      main: `${plan.free.toLocaleString()} 則`,
+      sub: `預算僅足月費，訊息量為免費額度`,
+      inc: `高用量月費 $1,400 + 免費 6,000 則`,
+      breakdown: [
+        { label:'月費', val:'$1,400' },
+        { label:'免費訊息額度', val:'6,000 則' },
+        { label:'可加購訊息', val:'$0（預算用完）' },
+      ],
+      note:'預算扣除月費 $1,400 後無剩餘，僅可使用免費 6,000 則訊息。',
+      tiers: null
+    });
+    return;
+  }
+
+  // 逆推：從預算反推能買多少訊息
+  let remain = budgetAfterFee;
+  let totalMsgs = plan.free;
+  const tiers = [];
+  let prev = 0;
+  for (let i = 0; i < TIERS.length; i++) {
+    if (remain <= 0) break;
+    const cap = TIERS[i].max;
+    const tierSize = cap === Infinity ? Infinity : cap - prev;
+    const maxAfford = Math.floor(remain / TIERS[i].price);
+    const used = cap === Infinity ? maxAfford : Math.min(tierSize, maxAfford);
+    if (used > 0) {
+      const cost = Math.floor(used * TIERS[i].price * 100) / 100;
+      tiers.push({ tier: i+1, from: prev+1, to: prev+used, price: TIERS[i].price, used, cost: Math.floor(used*TIERS[i].price) });
+      totalMsgs += used;
+      remain -= Math.floor(used * TIERS[i].price);
+    }
+    if (cap !== Infinity) prev = cap;
+    if (maxAfford <= tierSize || cap === Infinity) break;
+  }
+  const extraCost = budgetAfterFee - remain;
+  const incTax = Math.ceil((plan.fee + extraCost) * 1.05);
+  showResult({
+    label: '每月可發送訊息數（不超過預算）',
+    main: `${totalMsgs.toLocaleString()} 則`,
+    sub: `未稅總費用約 $${(plan.fee+extraCost).toLocaleString()} ／ 含稅約 $${incTax.toLocaleString()}`,
+    inc: `月費 $${plan.fee.toLocaleString()} + 加購費 $${extraCost.toLocaleString()} = $${(plan.fee+extraCost).toLocaleString()} 未稅`,
+    breakdown: [
+      { label:'月費（高用量）', val:'$1,400' },
+      { label:'免費訊息', val:'6,000 則' },
+      { label:'加購訊息', val:`${(totalMsgs-plan.free).toLocaleString()} 則` },
+      { label:'加購費用', val:`$${extraCost.toLocaleString()}` },
+      { label:'未稅合計', val:`$${(plan.fee+extraCost).toLocaleString()}`, total:true },
+      { label:'含稅合計（×1.05）', val:`$${incTax.toLocaleString()}`, total:true },
+    ],
+    note:`訊息數量無條件捨去小數，確保不超出預算。每則訊息平均單價約 $${((plan.fee+extraCost)/totalMsgs).toFixed(4)} 元。`,
+    tiers: tiers.length ? tiers : null
+  });
+}
+
+// 模式2：訊息量 → 費用
+function calc2() {
+  const plan = PLANS[currentPlan];
+  const qty = parseInt(document.getElementById('msgQty').value) || 0;
+
+  // 判斷方案升級
+  let actualPlan = plan;
+  if (qty > 3000 && currentPlan !== 'high') {
+    // 建議升高用量
+  }
+
+  if (!plan.canBuy) {
+    const usable = Math.min(qty, plan.free);
+    const overLimit = qty > plan.free;
+    showResult({
+      label: '每月費用（未稅）',
+      main: `$${plan.fee.toLocaleString()}`,
+      sub: overLimit ? `⚠️ 超出免費額度 ${(qty-plan.free).toLocaleString()} 則，無法加購！` : `可發送 ${usable.toLocaleString()} 則`,
+      inc: overLimit ? `建議改用高用量方案以加購額外訊息` : `月費 $${plan.fee.toLocaleString()}，含稅約 $${Math.ceil(plan.fee*1.05).toLocaleString()}`,
+      breakdown: [
+        { label:`${plan.name}月費`, val:`$${plan.fee.toLocaleString()}` },
+        { label:'免費訊息額度', val:`${plan.free.toLocaleString()} 則` },
+        { label:'您的需求', val:`${qty.toLocaleString()} 則` },
+        overLimit ? { label:'超出額度（無法加購）', val:`${(qty-plan.free).toLocaleString()} 則`, warn:true } : { label:'剩餘額度', val:`${(plan.free-qty).toLocaleString()} 則` },
+        { label:'月費合計', val:`$${plan.fee.toLocaleString()}`, total:true },
+      ],
+      note: overLimit ? `⚠️ ${plan.name}方案不支援加購訊息。若需發送超過 ${plan.free.toLocaleString()} 則，請升級為高用量方案（月費 $1,400，含 6,000 則免費訊息）。` : `${plan.name}方案月費 $${plan.fee.toLocaleString()}（含稅 $${Math.ceil(plan.fee*1.05).toLocaleString()}），免費含 ${plan.free.toLocaleString()} 則訊息。`,
+      tiers: null
+    });
+    return;
+  }
+
+  // 高用量
+  const extraMsgs = Math.max(0, qty - plan.free);
+  const { total: extraCost, detail } = extraMsgs > 0 ? calcExtraCost(extraMsgs) : { total:0, detail:[] };
+  const totalCost = plan.fee + extraCost;
+  const incTax = Math.ceil(totalCost * 1.05);
+  const perMsg = qty > 0 ? (totalCost / qty).toFixed(4) : '0';
+
+  showResult({
+    label: '每月費用（未稅）',
+    main: `$${totalCost.toLocaleString()}`,
+    sub: `含稅約 $${incTax.toLocaleString()}｜每則平均 $${perMsg}`,
+    inc: `月費 $1,400 + 加購費 $${extraCost.toLocaleString()} = $${totalCost.toLocaleString()} 未稅`,
+    breakdown: [
+      { label:'月費（高用量）', val:'$1,400' },
+      { label:'免費訊息', val:'6,000 則' },
+      { label:'加購訊息數', val:`${extraMsgs.toLocaleString()} 則` },
+      { label:'加購費用（累進）', val:`$${extraCost.toLocaleString()}` },
+      { label:'未稅合計', val:`$${totalCost.toLocaleString()}`, total:true },
+      { label:'含稅合計（×1.05）', val:`$${incTax.toLocaleString()}`, total:true },
+    ],
+    note:`採累進分階費率，非整包以最低單價計算。每則平均單價 $${perMsg} 元。`,
+    tiers: detail.length ? detail : null
+  });
+}
+
+function showResult({ label, main, sub, inc, breakdown, note, tiers }) {
+  document.getElementById('resultArea').classList.remove('hidden');
+  document.getElementById('resultLabel').textContent = label;
+  document.getElementById('resultMain').textContent = main;
+  document.getElementById('resultSub').textContent = sub;
+  document.getElementById('resultInc').textContent = inc;
+
+  // Breakdown
+  const bd = document.getElementById('breakdown');
+  bd.innerHTML = breakdown.map(r =>
+    `<div class="bk-row ${r.total?'total':''}">
+      <span class="bk-label">${r.label}</span>
+      <span class="bk-val" style="${r.warn?'color:#E65100':''}">${r.val}</span>
+    </div>`
+  ).join('');
+
+  // Tier detail
+  const tierCard = document.getElementById('tierCard');
+  if (tiers && tiers.length) {
+    tierCard.classList.remove('hidden');
+    document.getElementById('tierBody').innerHTML = tiers.map(t =>
+      `<tr class="${t.used>0?'active-tier':''}">
+        <td>第 ${t.tier} 階</td>
+        <td>${t.from.toLocaleString()} ~ ${(t.from+t.used-1).toLocaleString()}</td>
+        <td>$${t.price}</td>
+        <td>${t.used.toLocaleString()} 則</td>
+        <td>$${t.cost.toLocaleString()}</td>
+      </tr>`
+    ).join('');
+  } else {
+    tierCard.classList.add('hidden');
+  }
+
+  document.getElementById('noteBlock').innerHTML = `<b>📌 注意事項：</b><br>${note}`;
+  document.getElementById('resultArea').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+</script>
+</body>
+</html>
